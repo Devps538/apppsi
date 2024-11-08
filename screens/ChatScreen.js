@@ -42,9 +42,10 @@ export default function ChatScreen() {
           contentContainerStyle={styles.messagesList}
         />
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.emojiButton} onPress={() => setShowEmojiPicker(true)}>
-            <Text style={styles.emojiButtonText}>😊</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.emojiButton} onPress={() => setShowEmojiPicker(true)}>
+        <Text style={styles.emojiButtonText}>😊</Text> {/* Emoji dentro de <Text> */}
+        </TouchableOpacity>
+
           <TextInput
             style={styles.textInput}
             placeholder="Digite sua mensagem..."
