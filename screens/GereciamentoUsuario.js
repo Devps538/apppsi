@@ -4,7 +4,7 @@ import { SafeAreaView, StyleSheet } from 'react-native';
 import { DataTable, TextInput, Modal, Portal, IconButton, Button } from 'react-native-paper';
 import axios from 'axios';
 
-const API_URL = 'http://172.16.6.220:3000'; // Use o IP da sua máquina
+const API_URL = 'http://192.168.1.4:3000'; // Apenas a base URL
 
 const GerencimentoUsuario = () => {
   const [visible, setVisible] = React.useState({
@@ -14,64 +14,84 @@ const GerencimentoUsuario = () => {
   });
   const [currentUser, setCurrentUser] = React.useState(null);
   const [users, setUsers] = React.useState([]);
-  const [newUser, setNewUser] = React.useState({ 
-    nome: '', 
-    senha: '', 
-    cpf: '', 
-    email: '', 
-    dataNascimento: '', 
-    sexo: '', 
-    tipoUsuario: 'paciente' // Valor padrão
+  const [newUser, setNewUser] = React.useState({
+    nome: '',
+    senha: '',
+    cpf: '',
+    email: '',
+    dataNascimento: '',
+    sexo: '',
+    tipoUsuario: 'paciente'
   });
 
+  // Função para buscar usuários da API
   const fetchUsers = async () => {
     try {
-      console.log('Fetching users from:', `${API_URL}/usuarios`);
-      const response = await axios.get(`${API_URL}/usuarios`);
-      console.log('Users fetched:', response.data);
-      setUsers(response.data);
+      const response = await axios.get(`${API_URL}/usuarios`, { timeout: 10000 });
+      setUsers(response.data); // Atualiza o estado com os usuários
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error.message);
+      console.error('Erro ao buscar usuários:', error);
+      alert('Não foi possível carregar os usuários');
     }
   };
 
+  // Função para adicionar um novo usuário
   const addUser = async () => {
+    if (!newUser.nome || !newUser.email || !newUser.senha) {
+      alert("Todos os campos são obrigatórios!");
+      return;
+    }
+
     try {
       await axios.post(`${API_URL}/usuarios`, newUser);
-      setNewUser({ nome: '', senha: '', cpf: '', email: '', dataNascimento: '', sexo: '', tipoUsuario: 'paciente' });
+      setNewUser({
+        nome: '',
+        senha: '',
+        cpf: '',
+        email: '',
+        dataNascimento: '',
+        sexo: '',
+        tipoUsuario: 'paciente'
+      });
       hideModal('addUser');
       fetchUsers();
     } catch (error) {
-      console.error('Erro ao adicionar usuário:', error.message);
+      console.error('Erro ao adicionar usuário:', error);
+      alert('Não foi possível adicionar o usuário');
     }
   };
 
+  // Função para atualizar um usuário
   const updateUser = async () => {
     if (currentUser?.id) {
       try {
-        await axios.put(`${API_URL}/usuario/atualizar/${currentUser.id}`, currentUser);
+        await axios.put(`${API_URL}/usuarios/${currentUser.id}`, currentUser);
         setCurrentUser(null);
         hideModal('editUser');
         fetchUsers();
       } catch (error) {
-        console.error('Erro ao atualizar usuário:', error.message);
+        console.error('Erro ao atualizar usuário:', error);
+        alert('Não foi possível atualizar o usuário');
       }
     }
   };
 
+  // Função para deletar um usuário
   const deleteUser = async () => {
     if (currentUser?.id) {
       try {
-        await axios.delete(`${API_URL}/usuario/deletar/${currentUser.id}`);
+        await axios.delete(`${API_URL}/usuarios/${currentUser.id}`);
         setCurrentUser(null);
         hideModal('deleteUser');
         fetchUsers();
       } catch (error) {
-        console.error('Erro ao deletar usuário:', error.message);
+        console.error('Erro ao deletar usuário:', error);
+        alert('Não foi possível excluir o usuário');
       }
     }
   };
 
+  // Carrega os usuários quando o componente for montado
   React.useEffect(() => {
     fetchUsers();
   }, []);
@@ -82,6 +102,9 @@ const GerencimentoUsuario = () => {
 
   const hideModal = (type) => {
     setVisible({ ...visible, [type]: false });
+    if (type === 'editUser' || type === 'deleteUser') {
+      setCurrentUser(null); // Resetando o usuário ao fechar o modal de edição ou exclusão
+    }
   };
 
   return (
@@ -108,21 +131,25 @@ const GerencimentoUsuario = () => {
                       showModal('editUser');
                     }}
                   />
-                  <IconButton icon="delete" size={20} onPress={() => {
-                    setCurrentUser(user);
-                    showModal('deleteUser');
-                  }} />
+                  <IconButton
+                    icon="delete"
+                    size={20}
+                    onPress={() => {
+                      setCurrentUser(user);
+                      showModal('deleteUser');
+                    }}
+                  />
                 </DataTable.Cell>
               </DataTable.Row>
             ))
           ) : (
             <DataTable.Row>
-              <DataTable.Cell>Nenhum usuário encontrado</DataTable.Cell>
+              <DataTable.Cell colSpan={3}>Nenhum usuário encontrado</DataTable.Cell>
             </DataTable.Row>
           )}
         </DataTable>
 
-        {/* Modais */}
+        {/* Modal para Adicionar Usuário */}
         <Portal>
           <Modal visible={visible.addUser} onDismiss={() => hideModal('addUser')} contentContainerStyle={styles.modal}>
             <TextInput
@@ -132,7 +159,7 @@ const GerencimentoUsuario = () => {
               onChangeText={text => setNewUser(prev => ({ ...prev, nome: text }))}
             />
             <TextInput
-              label="E-mail"
+              label="Email"
               mode="outlined"
               value={newUser.email}
               onChangeText={text => setNewUser(prev => ({ ...prev, email: text }))}
@@ -144,84 +171,43 @@ const GerencimentoUsuario = () => {
               value={newUser.senha}
               onChangeText={text => setNewUser(prev => ({ ...prev, senha: text }))}
             />
-            <TextInput
-              label="CPF"
-              mode="outlined"
-              value={newUser.cpf}
-              onChangeText={text => setNewUser(prev => ({ ...prev, cpf: text }))}
-              maxLength={11} // Limita a 11 caracteres
-            />
-            <TextInput
-              label="Data de Nascimento"
-              mode="outlined"
-              value={newUser.dataNascimento}
-              onChangeText={text => setNewUser(prev => ({ ...prev, dataNascimento: text }))}
-              placeholder="YYYY-MM-DD" // Formato da data
-            />
-            <TextInput
-              label="Sexo"
-              mode="outlined"
-              value={newUser.sexo}
-              onChangeText={text => setNewUser(prev => ({ ...prev, sexo: text }))}
-              placeholder="masculino, feminino ou outro"
-            />
-            <Button mode="contained" onPress={addUser}>Adicionar</Button>
-            <IconButton icon="cancel" size={24} onPress={() => hideModal('addUser')} />
+            <Button onPress={addUser}>Adicionar</Button>
+            <Button onPress={() => hideModal('addUser')}>Cancelar</Button>
           </Modal>
         </Portal>
 
+        {/* Modal para Editar Usuário */}
         <Portal>
           <Modal visible={visible.editUser} onDismiss={() => hideModal('editUser')} contentContainerStyle={styles.modal}>
             <TextInput
               label="Nome"
               mode="outlined"
               value={currentUser?.nome || ''}
-              onChangeText={text => setCurrentUser(prev => prev ? { ...prev, nome: text } : null)}
+              onChangeText={text => setCurrentUser(prev => ({ ...prev, nome: text }))}
             />
             <TextInput
-              label="E-mail"
+              label="Email"
               mode="outlined"
               value={currentUser?.email || ''}
-              onChangeText={text => setCurrentUser(prev => prev ? { ...prev, email: text } : null)}
+              onChangeText={text => setCurrentUser(prev => ({ ...prev, email: text }))}
             />
             <TextInput
               label="Senha"
               mode="outlined"
               secureTextEntry
               value={currentUser?.senha || ''}
-              onChangeText={text => setCurrentUser(prev => prev ? { ...prev, senha: text } : null)}
+              onChangeText={text => setCurrentUser(prev => ({ ...prev, senha: text }))}
             />
-            <TextInput
-              label="CPF"
-              mode="outlined"
-              value={currentUser?.cpf || ''}
-              onChangeText={text => setCurrentUser(prev => prev ? { ...prev, cpf: text } : null)}
-              maxLength={11} // Limita a 11 caracteres
-            />
-            <TextInput
-              label="Data de Nascimento"
-              mode="outlined"
-              value={currentUser?.dataNascimento || ''}
-              onChangeText={text => setCurrentUser(prev => prev ? { ...prev, dataNascimento: text } : null)}
-              placeholder="YYYY-MM-DD" // Formato da data
-            />
-            <TextInput
-              label="Sexo"
-              mode="outlined"
-              value={currentUser?.sexo || ''}
-              onChangeText={text => setCurrentUser(prev => prev ? { ...prev, sexo: text } : null)}
-              placeholder="masculino, feminino ou outro"
-            />
-            <Button mode="contained" onPress={updateUser}>Salvar</Button>
-            <IconButton icon="cancel" size={24} onPress={() => hideModal('editUser')} />
+            <Button onPress={updateUser}>Salvar</Button>
+            <Button onPress={() => hideModal('editUser')}>Cancelar</Button>
           </Modal>
         </Portal>
 
+        {/* Modal para Deletar Usuário */}
         <Portal>
           <Modal visible={visible.deleteUser} onDismiss={() => hideModal('deleteUser')} contentContainerStyle={styles.modal}>
-            <TextInput label="Nome" mode="outlined" value={currentUser?.nome || ''} disabled />
-            <Button mode="contained" onPress={deleteUser}>Deletar</Button>
-            <IconButton icon="cancel" size={24} onPress={() => hideModal('deleteUser')} />
+            <Button onPress={deleteUser}>Excluir</Button>
+            <Button onPress={() => hideModal('deleteUser')}>Cancelar</Button>
           </Modal>
         </Portal>
       </SafeAreaView>
@@ -232,12 +218,13 @@ const GerencimentoUsuario = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingTop: 20,
   },
   modal: {
     backgroundColor: 'white',
     padding: 20,
     margin: 20,
+    borderRadius: 10,
   },
 });
 

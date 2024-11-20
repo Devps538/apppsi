@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import {
     StyleSheet,
@@ -11,33 +10,15 @@ import {
     Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import api from '../src/api'; // Importe o arquivo de configuração do Axios
 
 export default function LoginScreen() {
     const navigation = useNavigation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = async () => {
-        Keyboard.dismiss();
-        try {
-            const response = await api.post('/login', { username, password });
-            const { tipoUsuario } = response.data;
-
-            // Navegação com base no tipo de usuário retornado
-            if (tipoUsuario === 'admin') {
-                navigation.navigate('Usuarios');
-            } else if (tipoUsuario === 'psychologist') {
-                navigation.navigate('Psychologist');
-            } else if (tipoUsuario === 'patient') {
-                navigation.navigate('Patient');
-            } else {
-                alert('Tipo de usuário desconhecido.');
-            }
-        } catch (error) {
-            alert('Erro ao fazer login. Verifique suas credenciais.');
-            console.error('Erro no login:', error);
-        }
+    const handleLogin = () => {
+        // Navegar para a tela "Patient", que é o nome correto registrado no Stack.Navigator
+        navigation.navigate('Patient');
     };
 
     return (
@@ -60,7 +41,6 @@ export default function LoginScreen() {
                 <TouchableOpacity style={styles.button} onPress={handleLogin}>
                     <Text style={styles.buttonText}>Entrar</Text>
                 </TouchableOpacity>
-                {/* Adicione outros botões conforme necessário */}
             </View>
         </TouchableWithoutFeedback>
     );
