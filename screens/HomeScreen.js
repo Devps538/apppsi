@@ -6,6 +6,7 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <Image source={require('../assets/logo/logo.png')} style={styles.logo} />
       <Text style={styles.welcome}>Seja bem-vindo!</Text>
+
       <Text style={styles.appName}>apppsi</Text>
       <View style={styles.buttonContainer}>
         <TouchableOpacity

@@ -1,10 +1,10 @@
 import 'react-native-gesture-handler';
-import * as React from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Feather } from '@expo/vector-icons';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Alert } from 'react-native';
 
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -18,105 +18,75 @@ import SendNotificationScreen from './screens/SendNotificationScreen';
 import ConfirmAppointmentScreen from './screens/ConfirmAppointmentScreen';
 import ViewAppointmentsScreen from './screens/ViewAppointmentsScreen';
 import ChatScreen from './screens/ChatScreen';
+import UserScreen from './screens/UserScreen';
 
-const Stack = createStackNavigator();
+// Função para criar uma confirmação antes de sair
+function handleLogout(navigation) {
+  Alert.alert(
+    'Sair',
+    'Tem certeza que deseja sair?',
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', onPress: () => navigation.navigate('Login') },
+    ],
+    { cancelable: true }
+  );
+}
+
 const Drawer = createDrawerNavigator();
 
-function MenuIcon({ navigation }) {
+// Drawer único para todas as telas
+function AppDrawer() {
   return (
-    <TouchableOpacity onPress={() => navigation.toggleDrawer()} style={styles.menuButton}>
-      <Feather name="menu" size={30} color="black" />
-    </TouchableOpacity>
-  );
-}
-
-function PsychologistScreenWithMenu({ navigation }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <MenuIcon navigation={navigation} />
-      <PsychologistScreen />
-    </View>
-  );
-}
-
-function DiaryListScreenWithMenu({ navigation }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <MenuIcon navigation={navigation} />
-      <DiaryListScreen />
-    </View>
-  );
-}
-
-function SendNotificationScreenWithMenu({ navigation }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <MenuIcon navigation={navigation} />
-      <SendNotificationScreen />
-    </View>
-  );
-}
-
-function ConfirmAppointmentScreenWithMenu({ navigation }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <MenuIcon navigation={navigation} />
-      <ConfirmAppointmentScreen />
-    </View>
-  );
-}
-function ViewAppointmentsScreenWithMenu({ navigation }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <MenuIcon navigation={navigation} />
-      <ViewAppointmentsScreen />
-    </View>
-  );
-}
-
-function PatientScreenWithMenu({ navigation }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <MenuIcon navigation={navigation} />
-      <PatientScreen />
-    </View>
-  );
-}
-
-function PsychologistDrawer() {
-  return (
-    <Drawer.Navigator initialRouteName="PsychologistHome" screenOptions={{ headerShown: false }}>
-      <Drawer.Screen name="Início" component={PsychologistScreenWithMenu} />
-      <Drawer.Screen name="Lista de Diário" component={DiaryListScreenWithMenu} />
-      <Drawer.Screen name="Consultas" component={ViewAppointmentsScreenWithMenu} />
-      <Drawer.Screen name="Sair" component={HomeScreen} />
+    <Drawer.Navigator
+      initialRouteName="Início"
+      screenOptions={{
+        headerShown: true,
+        headerStyle: { backgroundColor: '#f5f5f5' },
+        headerTitleAlign: 'center',
+      }}
+    >
+      <Drawer.Screen name="Início" component={HomeScreen} />
+      <Drawer.Screen name="Consultas" component={ViewAppointmentsScreen} />
+      <Drawer.Screen name="Lista de Diário" component={DiaryListScreen} />
+      <Drawer.Screen name="Usuários" component={UserScreen} />
+      <Drawer.Screen name="Confirmar Consulta" component={ConfirmAppointmentScreen} />
+      <Drawer.Screen
+        name="Sair"
+        component={LoginScreen}
+        options={{
+          title: 'Sair',
+          drawerItemStyle: { backgroundColor: '#f8d7da' },
+          drawerIcon: () => <Feather name="log-out" size={20} color="red" />,
+          listeners: {
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              handleLogout(e.navigation);
+            },
+          },
+        }}
+      />
     </Drawer.Navigator>
   );
 }
 
-function PatientDrawer() {
-  return (
-    <Drawer.Navigator initialRouteName="PatientHome" screenOptions={{ headerShown: false }}>
-      <Drawer.Screen name="Início" component={PatientScreenWithMenu} />
-      <Drawer.Screen name="Confirmar Consulta" component={ConfirmAppointmentScreenWithMenu} />
-      <Drawer.Screen name="Sair" component={HomeScreen} />
-    </Drawer.Navigator>
-  );
-}
-
+// Aplicação principal
+const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{ headerShown: false }}
+      >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Cadastro" component={CadastroScreen} />
-        <Stack.Screen name="Psychologist" component={PsychologistDrawer} />
-        <Stack.Screen name="DiaryList" component={DiaryListScreen} />
-        <Stack.Screen name="Patient" component={PatientDrawer} />
+        <Stack.Screen name="Psychologist" component={AppDrawer} />
+        <Stack.Screen name="Patient" component={AppDrawer} />
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         <Stack.Screen name="DiaryView" component={ViewDiaryScreen} />
-        <Stack.Screen name="Chat" component={ChatScreen} /> 
+        <Stack.Screen name="Chat" component={ChatScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

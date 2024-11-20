@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, Switch, Image, TouchableOpacity, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, Switch, Image, TouchableOpacity, Platform, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import axios from 'axios'; // Importando o Axios para fazer a chamada HTTP
 
 export default function CadastroScreen() {
   const navigation = useNavigation();
@@ -21,12 +22,43 @@ export default function CadastroScreen() {
   const [isPsychologist, setIsPsychologist] = useState(false);
   const [crp, setCrp] = useState('');
 
-  const handleRegister = () => {
+  // Função para registrar usuário no back-end
+  const handleRegister = async () => {
     Keyboard.dismiss();
-    if (isPsychologist && crp) {
-      navigation.navigate('Psychologist');
-    } else {
-      navigation.navigate('Patient');
+
+    // Verifica se as senhas coincidem
+    if (password !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não coincidem');
+      return;
+    }
+
+    const userData = {
+      nome: name,
+      cpf: cpf,
+      email: email,
+      datanascimento: dobText,
+      sexo: gender,
+      senha: password,
+      tipoUsuario: isPsychologist ? 'Psicólogo' : 'Paciente',
+      crp: isPsychologist ? crp : undefined, // Adiciona CRP apenas se for psicólogo
+    };
+
+    try {
+      const response = await axios.post('http://localhost:3000', userData); // Substitua pelo IP do seu back-end
+
+      if (response.status === 201) {
+        Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
+        // Navega para a tela de acordo com o tipo de usuário
+        if (isPsychologist) {
+          navigation.navigate('Psychologist');
+        } else {
+          navigation.navigate('Patient');
+        }
+      } else {
+        Alert.alert('Erro', 'Falha ao cadastrar usuário');
+      }
+    } catch (error) {
+      Alert.alert('Erro', `Erro ao conectar ao servidor: ${error.message}`);
     }
   };
 
@@ -122,10 +154,7 @@ export default function CadastroScreen() {
         />
         <View style={styles.switchContainer}>
           <Text>Psicólogo</Text>
-          <Switch
-            value={isPsychologist}
-            onValueChange={(value) => setIsPsychologist(value)}
-          />
+          <Switch value={isPsychologist} onValueChange={setIsPsychologist} />
         </View>
         {isPsychologist && (
           <TextInput
